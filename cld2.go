@@ -34,7 +34,7 @@ func main() {
 
 	// P3
 	fmt.Printf("OK=%d\n", CLE_OK)
-	var t Cld_msg_get_resp
+	var t cld_msg_get_resp
 	Print(t)
 	Print(listenport) // P3
 }
