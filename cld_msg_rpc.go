@@ -157,6 +157,9 @@ type cld_msg_open struct {
 	events cld_events
 	inode_name string
 }
+func (t cld_msg_open) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** OPEN message response */
 type cld_msg_open_resp struct {
