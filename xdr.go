@@ -9,18 +9,25 @@ import (
 )
 
 type XDR struct {
+	level int
 	buf []byte
 }
+
 // XXX try to create a special interface XDRe, use here instead of interface{}
 func (x *XDR) Encode(p interface{}) {
+	indent := make([]byte, x.level)  // P3
+	for i := 0; i < len(indent); i++ {
+		indent[i] = ' '
+	}
+	x.level += 1
 	var t reflect.Type = reflect.TypeOf(p)
 	var v reflect.Value = reflect.ValueOf(p)
 	switch t.Kind() {
 	  case reflect.Struct:
-		fmt.Printf("Encode struct\n")
+		fmt.Printf("%sEncode struct\n", indent)
 		for i := 0; i < v.NumField(); i++ {
 			fs := t.Field(i)
-			fmt.Printf("%d: %s %s\n", i, fs.Name, fs.Type)
+			fmt.Printf("%s%d: %s %s\n", indent, i, fs.Name, fs.Type)
 			vf := v.Field(i)
 
 			// The documentation for the package reflect tells us
@@ -34,15 +41,22 @@ func (x *XDR) Encode(p interface{}) {
 			switch fs.Type.Kind() {
 			  case reflect.Int:	// we treat this as Int32
 				vi := vf.Int()
-				fmt.Printf("Encode field %s int %d\n", fs.Name, int(vi))
+				fmt.Printf("%sEncode field %s int %d\n", indent, fs.Name, int(vi))
 				var a4 *[4]byte = new([4]byte)
-				a4[0] = byte(vi >> 24)
-				a4[1] = byte(vi >> 16)
-				a4[2] = byte(vi >> 8)
-				a4[3] = byte(vi)
+				for j := 0; j < 4; j++ {
+					a4[j] = byte(vi >> uint((3-j)*8))
+				}
 				bv = a4[0:4]
+			  case reflect.Int64:
+				vi := vf.Int()
+				fmt.Printf("%sEncode field %s int64 %d\n", indent, fs.Name, vi)
+				var a4 *[8]byte = new([8]byte)
+				for j := 0; j < 8; j++ {
+					a4[j] = byte(vi >> uint((7-j)*8))
+				}
+				bv = a4[0:8]
 			  case reflect.String:
-				fmt.Printf("Encode field %s string\n", fs.Name)
+				fmt.Printf("%sEncode field %s string\n", indent, fs.Name)
 				vs := vf.String()
 				// bv = []byte(vs)
 				var l int = len(vs)
@@ -52,8 +66,12 @@ func (x *XDR) Encode(p interface{}) {
 				bv[2] = byte(l >> 8)
 				bv[3] = byte(l)
 				copy(bv[4:4+l], vs)
+			// case reflect.Struct:
+			//	fmt.Printf("%sEncode field %s struct\n", indent, fs.Name)
+			// Same provlem as with taking Interface() above
+			//	x.Encode(.....)
 			  default:
-				fmt.Printf("Encode field %s unknown\n", fs.Name)
+				fmt.Printf("%sEncode field %s unknown\n", indent, fs.Name)
 				bv = nil
 			}
 
@@ -74,13 +92,12 @@ func (x *XDR) Encode(p interface{}) {
 	  default:
 		// As it happens, currently we call Encode() on structs only
 		// XXX then panic() here
-		fmt.Printf("Encode unknown\n")
+		fmt.Printf("%sEncode unknown\n", indent)
 	}
 
-	// XXX
-	// var a *[10]byte = new([10]byte)
-	// x.buf = a[0:10]
+	x.level -= 1
 }
+
 func (x *XDR) Fetch() ([]byte) {
 	return x.buf
 }

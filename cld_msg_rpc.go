@@ -166,6 +166,9 @@ type cld_msg_open_resp struct {
 	msg cld_msg_generic_resp
 	fh int64
 }
+func (t cld_msg_open_resp) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** GET message */
 type cld_msg_get struct {
