@@ -145,6 +145,9 @@ type cld_msg_generic_resp struct {
 	code cle_err_codes
 	xid_in int64				/**< C->S xid */
 }
+func (t cld_msg_generic_resp) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** ACK-FRAG message */
 type cld_msg_ack_frag struct {
@@ -167,7 +170,8 @@ type cld_msg_open_resp struct {
 	fh int64
 }
 func (t cld_msg_open_resp) XDRencode(x *XDR) {
-	x.Encode(t)
+	t.msg.XDRencode(x)
+	x.EncodeInt64(t.fh)
 }
 
 /** GET message */
