@@ -124,7 +124,6 @@ type cld_pkt_msg_infos struct {
 // 	case CLD_PKT_ORD_FIRST_LAST:
 // 		struct cld_pkt_msg_infos mi;
 // };
-// Must use a XDRcoder interface XXX
 type cld_pkt_msg_info struct {
 	order cld_pkt_order_t
 	// union {

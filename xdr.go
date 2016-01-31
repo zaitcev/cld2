@@ -13,8 +13,7 @@ type XDR struct {
 	buf []byte
 }
 
-// XXX try to create a special interface XDRe, use here instead of interface{}
-func (x *XDR) Encode(p interface{}) {
+func (x *XDR) Encode(p XDRe) {
 	indent := make([]byte, x.level)  // P3
 	for i := 0; i < len(indent); i++ {
 		indent[i] = ' '
@@ -112,4 +111,8 @@ func (x *XDR) append(bv []byte) {
 
 func (x *XDR) Fetch() ([]byte) {
 	return x.buf
+}
+
+type XDRe interface {
+	XDRencode(x *XDR)
 }
