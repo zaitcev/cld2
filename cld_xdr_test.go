@@ -22,16 +22,7 @@ func TestCLDencode_cld_msg_open(t *testing.T) {
 	sut.XDRencode(&x)
 	result := x.Fetch()
 	if !bytes.Equal(result, sample[:]) {
-		fmt.Fprintf(os.Stderr, "sample:")
-		for _, n := range sample {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "result:")
-		for _, n := range result {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
+		printMismatch(result, sample[:])
 		t.Fail()
 	}
 
@@ -50,16 +41,7 @@ func TestCLDencode_cld_msg_open_resp(t *testing.T) {
 	sut.XDRencode(&x)
 	result := x.Fetch()
 	if !bytes.Equal(result, sample[:]) {
-		fmt.Fprintf(os.Stderr, "sample:")
-		for _, n := range sample {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "result:")
-		for _, n := range result {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
+		printMismatch(result, sample[:])
 		t.Fail()
 	}
 }
@@ -90,17 +72,7 @@ func TestCLDencode_cld_pkt_hdr_1(t *testing.T) {
 	sut.XDRencode(&x)
 	result := x.Fetch()
 	if !bytes.Equal(result, sample[:]) {
-		// XXX time to factor this out across test procedures
-		fmt.Fprintf(os.Stderr, "sample:")
-		for _, n := range sample {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "result:")
-		for _, n := range result {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
+		printMismatch(result, sample[:])
 		t.Fail()
 	}
 }
@@ -124,17 +96,20 @@ func TestCLDencode_cld_pkt_hdr_2(t *testing.T) {
 	sut.XDRencode(&x)
 	result := x.Fetch()
 	if !bytes.Equal(result, sample[:]) {
-		// XXX time to factor this out across test procedures
-		fmt.Fprintf(os.Stderr, "sample:")
-		for _, n := range sample {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, "result:")
-		for _, n := range result {
-			fmt.Fprintf(os.Stderr, " %02x", n)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
+		printMismatch(result, sample[:])
 		t.Fail()
 	}
+}
+
+func printMismatch(result []byte, sample []byte) {
+	fmt.Fprintf(os.Stderr, "sample:")
+	for _, n := range sample {
+		fmt.Fprintf(os.Stderr, " %02x", n)
+	}
+	fmt.Fprintf(os.Stderr, "\n")
+	fmt.Fprintf(os.Stderr, "result:")
+	for _, n := range result {
+		fmt.Fprintf(os.Stderr, " %02x", n)
+	}
+	fmt.Fprintf(os.Stderr, "\n")
 }
