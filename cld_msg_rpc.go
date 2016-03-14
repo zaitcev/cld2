@@ -138,6 +138,12 @@ type cld_pkt_hdr struct {
 	user string
 	mi cld_pkt_msg_info
 }
+func (t cld_pkt_hdr) XDRencode(x *XDR) {
+	x.EncodeInt64(t.magic)
+	x.EncodeInt64(t.sid)
+	x.EncodeString(t.user)
+	t.mi.XDRencode(x)
+}
 
 /** generic response for PUT, CLOSE, DEL, LOCK, UNLOCK */
 type cld_msg_generic_resp struct {
