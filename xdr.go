@@ -4,29 +4,20 @@
 package main
 
 import (
-	"fmt"	// P3
 	"reflect"
 )
 
 type XDR struct {
-	level int
 	buf []byte
 }
 
 func (x *XDR) Encode(p XDRe) {
-	indent := make([]byte, x.level)  // P3
-	for i := 0; i < len(indent); i++ {
-		indent[i] = ' '
-	}
-	x.level += 1
 	var t reflect.Type = reflect.TypeOf(p)
 	var v reflect.Value = reflect.ValueOf(p)
 	switch t.Kind() {
 	  case reflect.Struct:
-		fmt.Printf("%sEncode struct\n", indent)
 		for i := 0; i < v.NumField(); i++ {
 			fs := t.Field(i)
-			fmt.Printf("%s%d: %s %s\n", indent, i, fs.Name, fs.Type)
 			vf := v.Field(i)
 
 			// The documentation for the package reflect tells us
@@ -39,31 +30,25 @@ func (x *XDR) Encode(p XDRe) {
 			switch fs.Type.Kind() {
 			  case reflect.Int:	// we treat this as Int32
 				vi := vf.Int()
-				fmt.Printf("%sEncode field %s int %d\n", indent, fs.Name, int(vi))
 				x.EncodeInt(int(vi))
 			  case reflect.Int64:
 				vi := vf.Int()
-				fmt.Printf("%sEncode field %s int64 %d\n", indent, fs.Name, vi)
 				x.EncodeInt64(vi)
 			  case reflect.String:
-				fmt.Printf("%sEncode field %s string\n", indent, fs.Name)
 				vs := vf.String()
 				x.EncodeString(vs)
 			// case reflect.Struct:
-			//	fmt.Printf("%sEncode field %s struct\n", indent, fs.Name)
 			// Same provlem as with taking Interface() above
 			//	x.Encode(.....)
 			  default:
-				fmt.Printf("%sEncode field %s unknown\n", indent, fs.Name)
+				;
 			}
 		}
 	  default:
 		// As it happens, currently we call Encode() on structs only
 		// XXX then panic() here
-		fmt.Printf("%sEncode unknown\n", indent)
+		;
 	}
-
-	x.level -= 1
 }
 
 func (x *XDR) EncodeInt(v int) {
