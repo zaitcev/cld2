@@ -82,6 +82,7 @@ func (x *XDR) EncodeInt64(v int64) {
 	x.append(a8[0:8])
 }
 
+// "In Go, a string is in effect a read-only slice of bytes."
 func (x *XDR) EncodeString(v string) {
 	var l int = len(v)
 	var bv []byte = make([]byte, 4 + ((l + 3) & ^3))

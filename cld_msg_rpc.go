@@ -40,6 +40,9 @@ const (
 
 	CMO_AFTER_LAST = 18	// variable value in the source
 )
+func (t cld_msg_op) XDRencode(x *XDR) {
+	x.EncodeInt(int(t))
+}
 
 /** CLD error codes */
 type cle_err_codes int
@@ -106,6 +109,9 @@ const (
 	CLD_PKT_ORD_LAST = 0x2
 	CLD_PKT_ORD_FIRST_LAST = 0x3
 )
+func (t cld_pkt_order_t) XDRencode(x *XDR) {
+	x.EncodeInt(int(t))
+}
 const CLD_PKT_IS_FIRST = 0x1
 const CLD_PKT_IS_LAST = 0x2
 
@@ -113,6 +119,10 @@ const CLD_PKT_IS_LAST = 0x2
 type cld_pkt_msg_infos struct {
 	xid int64				/**< opaque message id */
 	op cld_msg_op				/**< message operation */
+}
+func (t cld_pkt_msg_infos) XDRencode(x *XDR) {
+	x.EncodeInt64(t.xid)
+	t.op.XDRencode(x)
 }
 
 /** Information about the message contained in this packet */
@@ -124,11 +134,30 @@ type cld_pkt_msg_infos struct {
 // 	case CLD_PKT_ORD_FIRST_LAST:
 // 		struct cld_pkt_msg_infos mi;
 // };
-type cld_pkt_msg_info struct {
+type cld_pkt_msg_info_1 struct {
 	order cld_pkt_order_t
-	// union {
-	// 	struct cld_pkt_msg_infos mi;
-	// } cld_pkt_msg_info_u;
+}
+func (t cld_pkt_msg_info_1) XDRencode(x *XDR) {
+	if t.order == CLD_PKT_ORD_MID || t.order == CLD_PKT_ORD_LAST {
+		t.order.XDRencode(x)
+	} else {
+		panic(0)
+	}
+}
+type cld_pkt_msg_info_2 struct {
+	order cld_pkt_order_t
+	mi cld_pkt_msg_infos
+}
+func (t cld_pkt_msg_info_2) XDRencode(x *XDR) {
+	if t.order == CLD_PKT_ORD_FIRST || t.order == CLD_PKT_ORD_FIRST_LAST {
+		t.order.XDRencode(x)
+		t.mi.XDRencode(x)
+	} else {
+		panic(0)
+	}
+}
+type cld_pkt_msg_info interface {
+	XDRencode(x *XDR)
 }
 
 type cld_pkt_hdr struct {
@@ -158,6 +187,9 @@ func (t cld_msg_generic_resp) XDRencode(x *XDR) {
 type cld_msg_ack_frag struct {
 	seqid int64
 }
+func (t cld_msg_ack_frag) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** OPEN message */
 type cld_msg_open struct {
@@ -183,31 +215,53 @@ func (t cld_msg_open_resp) XDRencode(x *XDR) {
 type cld_msg_get struct {
 	fh int64
 }
+func (t cld_msg_get) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** GET message response */
 type cld_msg_get_resp struct {
 	msg cld_msg_generic_resp
-	inum uint64				/**< unique inode number */
-	vers uint64				/**< inode version */
+	inum int64				/**< unique inode number */
+	vers int64				/**< inode version */
 	time_create int64			/**< creation time */
 	time_modify int64			/**< last modification time */
 	flags cld_inode_flags
 	// string			inode_name<CLD_INODE_NAME_MAX>;
 	inode_name string
 	// opaque			data<CLD_MAX_PAYLOAD_SZ>;
-	data []byte
+	// data []byte
+	data string			// why hello there, const cancer
+}
+func (t cld_msg_get_resp) XDRencode(x *XDR) {
+	t.msg.XDRencode(x)
+	x.EncodeInt64(t.inum)
+	x.EncodeInt64(t.vers)
+	x.EncodeInt64(t.time_create)
+	x.EncodeInt64(t.time_modify)
+	x.EncodeInt(int(t.flags))	// stupid sexy type system
+	x.EncodeString(t.inode_name)
+	x.EncodeString(t.data)
 }
 
 /** PUT message */
 type cld_msg_put struct {
 	fh int64
 	// opaque			data<CLD_MAX_PAYLOAD_SZ>;
-	data []byte
+	// data []byte
+	data string			// why hello there, const cancer
+}
+func (t cld_msg_put) XDRencode(x *XDR) {
+	x.EncodeInt64(t.fh)
+	x.EncodeString(t.data)
 }
 
 /** CLOSE message */
 type cld_msg_close struct {
 	fh int64
+}
+func (t cld_msg_close) XDRencode(x *XDR) {
+	x.Encode(t)
 }
 
 /** DEL message */
@@ -215,10 +269,21 @@ type cld_msg_del struct {
 	//   string inode_name<CLD_INODE_NAME_MAX>;
 	inode_name string
 }
+func (t cld_msg_del) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** UNLOCK message */
+/*
+ * What's really interesting about this is that it's the only place in
+ * the whole protocol where "unsigned hyper" is used. Maybe the most
+ * significant is abused. XXX
+ */
 type cld_msg_unlock struct {
 	fh int64
+}
+func (t cld_msg_unlock) XDRencode(x *XDR) {
+	x.Encode(t)
 }
 
 /** LOCK message */
@@ -226,9 +291,15 @@ type cld_msg_lock struct {
 	fh int64
 	flags cld_lock_flags
 }
+func (t cld_msg_lock) XDRencode(x *XDR) {
+	x.Encode(t)
+}
 
 /** Server-to-client EVENT message */
 type cld_msg_event struct {
 	fh int64
 	events cld_events
+}
+func (t cld_msg_event) XDRencode(x *XDR) {
+	x.Encode(t)
 }
