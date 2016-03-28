@@ -7,6 +7,7 @@ import (
 	"fmt"
 	// "net"
 	"os"
+	"strconv"
 )
 
 const TAG = "cld2"
@@ -23,12 +24,31 @@ func main() {
 
 	var listenhost string
 	var listenport int
+	var _listenport string
 
 	flag.StringVar(&listenhost, "h", "", "Hostname to bind for listening")
-	flag.IntVar(&listenport, "p", 8081, "Port to bind for listening")
+	flag.StringVar(&_listenport, "p", "8081", "Port to bind for listening")
 
 	flag.Usage = usage
 	flag.Parse()
+
+	if _listenport == "auto" {
+		listenport = 0
+	} else {
+		var err error
+		listenport, err = strconv.Atoi(_listenport)
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+			    "%s: Argument for -p is invalid\n", TAG)
+			os.Exit(2)
+		}
+		if listenport < 1 || listenport > 65535 {
+			fmt.Fprintf(os.Stderr,
+			    "%s: Port number %d is out of range\n",
+			    TAG, listenport)
+			os.Exit(2)
+		}
+	}
 
 	fmt.Printf("host %s port %d\n", listenhost, listenport) // P3
 }
