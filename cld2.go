@@ -5,7 +5,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	// "net"
+	"net"
 	"os"
 	"strconv"
 )
@@ -51,6 +51,32 @@ func main() {
 	}
 
 	fmt.Printf("host %s port %d\n", listenhost, listenport) // P3
+
+	listen_netloc := net.JoinHostPort(listenhost, strconv.Itoa(listenport))
+	ln, err := net.Listen("tcp", listen_netloc)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,
+		    "%s: Listen(%s) error: %s\n",
+		    TAG, listen_netloc, err.Error())
+		os.Exit(1)
+	}
+	listen_addr := ln.Addr() // Addr XXX
+	if listenport == 0 {
+		// XXX write this to a file
+		// XXX No way to get just port except parsing the string
+		fmt.Printf("listening on addr %s\n", listen_addr.String())
+	}
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+			    "%s: Accept error: %s\n", TAG, err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Printf("connection\n") // P3
+		conn.Close()
+	}
 }
 
 /*
