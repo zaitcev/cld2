@@ -25,9 +25,12 @@ func main() {
 	var listenhost string
 	var listenport int
 	var _listenport string
+	var portfile string
 
 	flag.StringVar(&listenhost, "h", "", "Hostname to bind for listening")
 	flag.StringVar(&_listenport, "p", "8081", "Port to bind for listening")
+	flag.StringVar(&portfile,   "f", "",
+	    "File to write out the listen port number")
 
 	flag.Usage = usage
 	flag.Parse()
@@ -51,7 +54,10 @@ func main() {
 	}
 
 	fmt.Printf("host %s port %d\n", listenhost, listenport) // P3
+	_main(listenhost, listenport, portfile)
+}
 
+func _main(listenhost string, listenport int, portfile string) {
 	listen_netloc := net.JoinHostPort(listenhost, strconv.Itoa(listenport))
 	ln, err := net.Listen("tcp", listen_netloc)
 	if err != nil {
@@ -60,11 +66,11 @@ func main() {
 		    TAG, listen_netloc, err.Error())
 		os.Exit(1)
 	}
-	listen_addr := ln.Addr() // Addr XXX
-	if listenport == 0 {
-		// XXX write this to a file
-		// XXX No way to get just port except parsing the string
-		fmt.Printf("listening on addr %s\n", listen_addr.String())
+	if len(portfile) != 0 {
+		_, portstr, err := net.SplitHostPort(ln.Addr().String())
+		if err == nil {
+			write_port_to_file(portfile, portstr)
+		}
 	}
 	for {
 		conn, err := ln.Accept()
@@ -76,6 +82,20 @@ func main() {
 
 		fmt.Printf("connection\n") // P3
 		conn.Close()
+	}
+}
+
+/*
+ * Errors are ignored for now. When test reads the port file, it will
+ * report an error if it's not written.
+ */
+func write_port_to_file(portfile string, portstr string) {
+	fp, err := os.OpenFile(portfile,
+	    os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err == nil {
+		// File implements interface io.Writer, so...
+		fmt.Fprintf(fp, "%s\n", portstr)
+		fp.Close()
 	}
 }
 
