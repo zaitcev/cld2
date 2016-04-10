@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+// XXX To be moved to a common library to invoke CLI
 func TestBasicOpen(t *testing.T) {
 	cli_name := "cldcli"
 	var cli_path string
@@ -29,7 +30,7 @@ func TestBasicOpen(t *testing.T) {
 	// XXX Does it block if command floods its stdout?
 	err = cmd.Wait()
 	if err != nil {
-		fmt.Printf("Wait exit error non-nil\n")
+		fmt.Printf("Wait exit error non-nil\n") // P3
 
 		// F23 ships with golang-1.5.3, so this fals with:
 		// ./cld_proto_test.go:37: ee.Stderr undefined
@@ -41,6 +42,6 @@ func TestBasicOpen(t *testing.T) {
 		// is not captured as expected. Need to capture error by hand.
 		fmt.Printf("%s\n", err.Error())
 	} else {
-		fmt.Printf("Wait exit error is nil\n")
+		fmt.Printf("Wait exit error is nil\n") // P3
 	}
 }
